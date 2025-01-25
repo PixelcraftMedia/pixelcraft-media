@@ -122,10 +122,10 @@ const DynamicPage = ({ blogs, blog, categories, type, currentSlug }: Props) => {
   if (type === 'category' && blogs && categories) {
     return (
       <Layout
-      image={ ""}
-      metatitle={ ""}
-      metadescription={ ""}
-      slug={`blog/ "" `}
+      image={""}
+      metatitle={""}
+      metadescription={""}
+      slug={`blog/${categories.find(cat => cat.slug === currentSlug)?.slug || ''}`}
     >
       <div className='mt-96'>
         <h1>Posts in Category: {currentSlug}</h1>
@@ -134,7 +134,10 @@ const DynamicPage = ({ blogs, blog, categories, type, currentSlug }: Props) => {
           <ul>
             {categories.map((category) => (
               <li key={category.slug}>
-                <a href={`/blog/${category.slug}`} style={{ fontWeight: category.slug === currentSlug ? 'bold' : 'normal' }}>
+                <a 
+                  href={`/blog/${category.slug}`} 
+                  style={{ fontWeight: category.slug === currentSlug ? 'bold' : 'normal' }}
+                >
                   {category.name}
                 </a>
               </li>
@@ -146,7 +149,7 @@ const DynamicPage = ({ blogs, blog, categories, type, currentSlug }: Props) => {
           <Cards blogs={blogs} />
         </div>
       </div>
-      </Layout>
+    </Layout>
     );
   }
 
