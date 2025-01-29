@@ -46,24 +46,21 @@ interface Props {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const categories = await getAllCategory('ro-RO'); // Получаем категории
+  const categories = await getAllCategory('ro-RO'); 
   const paths: any[] = [];
 
   for (const category of categories) {
-    // Добавляем маршрут для категории
     paths.push({ params: { slug: [category.slug] } });
 
-    // Получаем блоги категории
     const blogs = await getBlogsByCategorySlug('ro-RO', category.slug);
     blogs.forEach((blog) => {
-      // Добавляем маршрут для каждого блога
       paths.push({ params: { slug: [category.slug, blog.slug] } });
     });
   }
 
   return {
     paths,
-    fallback: 'blocking', // Важно, если нужно поддерживать fallback
+    fallback: 'blocking',
   };
 };
 
@@ -71,20 +68,26 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const slug = context.params?.slug as string[] | undefined;
   const locale = context.locale || 'en-US';
 
-  if (!slug) {
+  if (!slug || slug.length === 0) {
     return { notFound: true };
   }
 
+  // Загружаем все категории
+  const categories = await getAllCategory(locale);
+  const category = categories.find((cat) => cat.slug === slug[0]);
+
+  // Если категории не существует, возвращаем 404
+  if (!category) {
+    return { notFound: true };
+  }
+
+  // Если указан только slug категории, загружаем её посты
   if (slug.length === 1) {
     const blogs = await getBlogsByCategorySlug(locale, slug[0]);
-    const categories = await getAllCategory(locale);
 
     return {
       props: {
-        blogs: blogs.map((blog) => ({
-          ...blog,
-          category: blog.category || { name: 'Uncategorized', slug: 'uncategorized' },
-        })),
+        blogs,
         categories,
         type: 'category',
         currentSlug: slug[0],
@@ -93,10 +96,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
     };
   }
 
+  // Если указан slug поста, проверяем, принадлежит ли он категории
   if (slug.length === 2) {
     const blog = await getBlogBySlug(slug[1], locale);
 
-    if (!blog) {
+    if (!blog || blog.category.slug !== slug[0]) {
       return { notFound: true };
     }
 
@@ -122,34 +126,34 @@ const DynamicPage = ({ blogs, blog, categories, type, currentSlug }: Props) => {
   if (type === 'category' && blogs && categories) {
     return (
       <Layout
-      image={""}
-      metatitle={""}
-      metadescription={""}
-      slug={`blog/${categories.find(cat => cat.slug === currentSlug)?.slug || ''}`}
-    >
-      <div className='mt-96'>
-        <h1>Posts in Category: {currentSlug}</h1>
-        <div>
-          <h2>Categories</h2>
-          <ul>
-            {categories.map((category) => (
-              <li key={category.slug}>
-                <a 
-                  href={`/blog/${category.slug}`} 
-                  style={{ fontWeight: category.slug === currentSlug ? 'bold' : 'normal' }}
-                >
-                  {category.name}
-                </a>
-              </li>
-            ))}
-          </ul>
+        image={""}
+        metatitle={""}
+        metadescription={""}
+        slug={`blog/${currentSlug}`}
+      >
+        <div className='mt-96'>
+          <h1>Posts in Category: {currentSlug}</h1>
+          <div>
+            <h2>Categories</h2>
+            <ul>
+              {categories.map((category) => (
+                <li key={category.slug}>
+                  <Link 
+                    href={`/blog/${category.slug}`} 
+                    className={category.slug === currentSlug ? 'font-bold' : 'normal'}
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2>Posts</h2>
+            <Cards blogs={blogs} />
+          </div>
         </div>
-        <div>
-          <h2>Posts</h2>
-          <Cards blogs={blogs} />
-        </div>
-      </div>
-    </Layout>
+      </Layout>
     );
   }
 
@@ -162,32 +166,21 @@ const DynamicPage = ({ blogs, blog, categories, type, currentSlug }: Props) => {
         slug={`blog/${blog.category.slug}/${blog.slug}`}
       >
         <section className="relative z-10 pb-18 pt-30 lg:pt-35 xl:pt-40">
-          <div className="absolute left-0 top-25 -z-1 flex w-full flex-col gap-3 opacity-50">
-            <div className="footer-bg-gradient h-[1.24px] w-full"></div>
-            <div className="footer-bg-gradient h-[2.47px] w-full"></div>
-            <div className="footer-bg-gradient h-[3.71px] w-full"></div>
-            <div className="footer-bg-gradient h-[4.99px] w-full"></div>
-            <div className="footer-bg-gradient h-[6.19px] w-full"></div>
-            <div className="footer-bg-gradient h-[7.42px] w-full"></div>
-            <div className="footer-bg-gradient h-[8.66px] w-full"></div>
-            <div className="footer-bg-gradient h-[9.90px] w-full"></div>
-            <div className="footer-bg-gradient h-[13px] w-full"></div>
-          </div>
-          <div className="absolute bottom-0 left-0 -z-1 h-24 w-full bg-gradient-to-b from-dark/0 to-dark"></div>
           <div className="px-4 text-center">
             <h1 className="mb-5.5 text-heading-2 font-extrabold text-white">{blog.title}</h1>
             <ul className="flex items-center justify-center gap-2">
               <li className="font-medium">
-                <a href="/">Home</a>
+                <Link href="/">Home</Link>
               </li>
-              <li className="font-medium">/<Link href={`${blog.category.slug}`}>{blog.category.slug}</Link></li>
+              <li className="font-medium">
+                /<Link href={`/blog/${blog.category.slug}`}>{blog.category.slug}</Link>
+              </li>
               <li className="font-medium">/{blog.slug}</li>
             </ul>
           </div>
         </section>
 
         <div className="container mx-auto px-4 py-8 mt-10">
-        
           <div className="post-content">
             <RichTextRenderer
               content={blog.content?.json || { nodeType: 'document', content: [] }}
