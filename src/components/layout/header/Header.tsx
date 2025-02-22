@@ -7,6 +7,8 @@ import scss from "./Header.module.scss";
 import SwitchLogo from "@/components/theme/SwitchLogo";
 import { LangIcon, ArrowIcon, PhoneIcon, TimeIcon } from "@/components/svgs";
 import LanguageSwitcher from "@/components/language/LanguageSwitcher";
+import Image from "next/image"
+
 // impot {
 // 	SwitchThemeButton,
 // 	SwitchThemeIcon
@@ -114,23 +116,11 @@ const Header: FC<HeaderProps> = ({ logo, ...props }) => {
 						<div className={scss.content}>
 							{/* ! header menu */}
 							<div className={scss.logo}>
-								<ScrollLink
-									to="/"
-									spy={true}
-									smooth={true}
-									offset={offsetScroll}
-									duration={durationScroll}
-									onClick={() => {
-										props.setIsOpen(false);
-										props.setIsOpenDropdown(false);
-										props.setIsOpenDropdownLanguage(false);
-										handleScroll();
-									}}
-								>
+						
 									
-								<SwitchLogo className={scss.logo__img} logo={logo} /><h2 className="ml-3 text-2xl ">PX</h2>
-									
-								</ScrollLink>
+								
+								<Image src="/1.png" alt="Logo" width={100} height={50} />
+								
 							</div>
 						
 							<div className={scss.nav__menu}>
